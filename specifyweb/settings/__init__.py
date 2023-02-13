@@ -72,6 +72,10 @@ SPECIFY_CONFIG_DIR = os.path.join(SPECIFY_THICK_CLIENT, "config")
 
 RO_MODE = False
 
+# Have django add a UTC offset when internally handling dates
+# https://docs.djangoproject.com/en/3.0/ref/settings/#use-tz 
+USE_TZ = True
+
 # Local time zone for this installation. Choices can be found here:
 # https://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
