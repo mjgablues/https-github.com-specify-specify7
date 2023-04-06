@@ -12,21 +12,6 @@ import type {
 import type { SaveBlockers } from './saveBlockers';
 import type { Collection, SpecifyModel } from './specifyModel';
 
-type AllowedFields<SCHEMA extends AnySchema> =
-  | keyof CommonFields
-  | keyof SCHEMA['fields']
-  | keyof SCHEMA['toManyDependent']
-  | keyof SCHEMA['toManyIndependent']
-  | keyof SCHEMA['toOneDependent']
-  | keyof SCHEMA['toOneIndependent'];
-
-type AllowedValues<SCHEMA extends AnySchema> = (CommonFields &
-  IR<never> &
-  SCHEMA['fields'] &
-  SCHEMA['toManyDependent'] &
-  SCHEMA['toManyIndependent'] &
-  SCHEMA['toOneDependent'] &
-  SCHEMA['toOneIndependent'])[AllowedFields<SCHEMA>];
 /*
  * FEATURE: need to improve the typing to handle the following:
  *    Dynamic references
@@ -57,23 +42,22 @@ export type SpecifyResource<SCHEMA extends AnySchema> = {
    * More info: https://stackoverflow.com/a/55992840/8584605
    */
   /* eslint-disable @typescript-eslint/method-signature-style */
+  /* jscpd:ignore-start*/
   get<
-    // FIELD_NAME extends
-    //   | keyof CommonFields
-    //   | keyof SCHEMA['fields']
-    //   | keyof SCHEMA['toManyDependent']
-    //   | keyof SCHEMA['toManyIndependent']
-    //   | keyof SCHEMA['toOneDependent']
-    //   | keyof SCHEMA['toOneIndependent'],
-    // VALUE extends (CommonFields &
-    //   IR<never> &
-    //   SCHEMA['fields'] &
-    //   SCHEMA['toManyDependent'] &
-    //   SCHEMA['toManyIndependent'] &
-    //   SCHEMA['toOneDependent'] &
-    //   SCHEMA['toOneIndependent'])[FIELD_NAME]
-    FIELD_NAME extends AllowedFields<SCHEMA>,
-    VALUE extends AllowedValues<SCHEMA>
+    FIELD_NAME extends
+      | keyof CommonFields
+      | keyof SCHEMA['fields']
+      | keyof SCHEMA['toManyDependent']
+      | keyof SCHEMA['toManyIndependent']
+      | keyof SCHEMA['toOneDependent']
+      | keyof SCHEMA['toOneIndependent'],
+    VALUE extends (CommonFields &
+      IR<never> &
+      SCHEMA['fields'] &
+      SCHEMA['toManyDependent'] &
+      SCHEMA['toManyIndependent'] &
+      SCHEMA['toOneDependent'] &
+      SCHEMA['toOneIndependent'])[FIELD_NAME]
   >(
     fieldName: FIELD_NAME
     // eslint-disable-next-line functional/prefer-readonly-type
@@ -86,6 +70,7 @@ export type SpecifyResource<SCHEMA extends AnySchema> = {
     : VALUE extends RA<AnySchema>
     ? string
     : VALUE;
+  /* jscpd:ignore-end*/
   // Case-insensitive fetch of a -to-one resource
   rgetPromise<
     FIELD_NAME extends
@@ -133,23 +118,22 @@ export type SpecifyResource<SCHEMA extends AnySchema> = {
   >(
     fieldName: FIELD_NAME
   ): Promise<Collection<VALUE[number]>>;
+  /* jscpd:ignore-start*/
   set<
-    // FIELD_NAME extends
-    //   | keyof CommonFields
-    //   | keyof SCHEMA['fields']
-    //   | keyof SCHEMA['toManyDependent']
-    //   | keyof SCHEMA['toManyIndependent']
-    //   | keyof SCHEMA['toOneDependent']
-    //   | keyof SCHEMA['toOneIndependent'],
-    // VALUE extends (CommonFields &
-    //   IR<never> &
-    //   SCHEMA['fields'] &
-    //   SCHEMA['toManyDependent'] &
-    //   SCHEMA['toManyIndependent'] &
-    //   SCHEMA['toOneDependent'] &
-    //   SCHEMA['toOneIndependent'])[FIELD_NAME]
-    FIELD_NAME extends AllowedFields<SCHEMA>,
-    VALUE extends AllowedValues<SCHEMA>
+    FIELD_NAME extends
+      | keyof CommonFields
+      | keyof SCHEMA['fields']
+      | keyof SCHEMA['toManyDependent']
+      | keyof SCHEMA['toManyIndependent']
+      | keyof SCHEMA['toOneDependent']
+      | keyof SCHEMA['toOneIndependent'],
+    VALUE extends (CommonFields &
+      IR<never> &
+      SCHEMA['fields'] &
+      SCHEMA['toManyDependent'] &
+      SCHEMA['toManyIndependent'] &
+      SCHEMA['toOneDependent'] &
+      SCHEMA['toOneIndependent'])[FIELD_NAME]
   >(
     fieldName: FIELD_NAME,
     value: readonly [VALUE] extends readonly [never]
@@ -174,7 +158,9 @@ export type SpecifyResource<SCHEMA extends AnySchema> = {
               : SerializedResource<VALUE> | SpecifyResource<VALUE>),
     options?: { readonly silent: boolean }
   ): SpecifyResource<SCHEMA>;
-  getDependentResource<FIELD_NAME extends keyof SCHEMA['toOneDependent']>(
+  /* jscpd:ignore-end*/ getDependentResource<
+    FIELD_NAME extends keyof SCHEMA['toOneDependent']
+  >(
     fieldName: FIELD_NAME
   ):
     | SpecifyResource<Exclude<SCHEMA['toOneDependent'][FIELD_NAME], null>>
