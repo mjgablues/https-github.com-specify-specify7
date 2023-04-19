@@ -7,8 +7,6 @@ import type { RA, RR } from '../../utils/types';
 import { ensure } from '../../utils/types';
 import { H3 } from '../Atoms';
 import { Button } from '../Atoms/Button';
-import { getField } from '../DataModel/helpers';
-import { schema } from '../DataModel/schema';
 import type { SpecifyModel } from '../DataModel/specifyModel';
 import { TableIcon } from '../Molecules/TableIcon';
 import { localizedRelationshipTypes } from '../SchemaConfig/helpers';
