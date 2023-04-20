@@ -252,7 +252,7 @@ jobs:
         if: steps.changed.outputs.changed
         working-directory: specifyweb/frontend/js_src
         run: |
-          npx prettier --write --minify `echo "${{steps.changed.outputs.changed}}" | tr " " "\n"`
+          npx prettier --write --minify `echo "${{steps.changed.outputs.changed}}" | tr " " "\n"` || true
 
       - name: Testing for duplicate codes
         working-directory: specifyweb/frontend/js_src
