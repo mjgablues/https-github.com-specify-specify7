@@ -62,6 +62,22 @@ class Resources(View):
             }
             return http.HttpResponse(api.toJson(response_data), content_type="application/json", status=201)
 
+created_response = {
+    "application/json": {
+        "schema": {
+            "type": "object",
+            "properties": {
+                "name": { "type": "string", "description": "The appresource name." },
+                "mimetype": { "type": "string" },
+                "metadata": { "type": "string" },
+                "data": { "type": "string", "description": "The data to be stored in the appresource." },
+            },
+            'required': ['name', 'mimetype', 'metadata', 'data'],
+            'additionalProperties': False
+        }
+    }
+}
+
 resources = openapi(schema={
     "get": {
         "responses": {
@@ -92,21 +108,7 @@ resources = openapi(schema={
         "requestBody": {
             "required": True,
             "description": "Creates appresource in the logged in collection owned by the logged in user.",
-            "content": {
-                "application/json": {
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "name": { "type": "string", "description": "The appresource name." },
-                            "mimetype": { "type": "string" },
-                            "metadata": { "type": "string" },
-                            "data": { "type": "string", "description": "The data to be stored in the appresource." },
-                        },
-                        'required': ['name', 'mimetype', 'metadata', 'data'],
-                        'additionalProperties': False
-                    }
-                }
-            }
+            "content": created_response
         },
         "responses": {
             "201": {
@@ -216,21 +218,7 @@ resource = openapi(schema={
         "requestBody": {
             "required": True,
             "description": "Updates the appresource with the given id in the logged in collection owned by the logged in user.",
-            "content": {
-                "application/json": {
-                    "schema": {
-                        "type": "object",
-                        "properties": {
-                            "name": { "type": "string", "description": "The appresource name." },
-                            "mimetype": { "type": "string" },
-                            "metadata": { "type": "string" },
-                            "data": { "type": "string", "description": "The data to be stored in the appresource." },
-                        },
-                        'required': ['name', 'mimetype', 'metadata', 'data'],
-                        'additionalProperties': False
-                    }
-                }
-            }
+            "content": created_response
         },
         "responses": {
             "204": { "description": "The resource was updated.", },
