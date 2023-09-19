@@ -991,3 +991,72 @@ class ReplaceRecordTests(ApiTests):
         # Relationship to agent should not be saved
         self.assertEqual(models.Collector.objects.filter(id=11,
                                                          createdbyagent_id=7).exists(), True)
+
+    def test_agent_speciality_in_agent_merging(self):
+        # Create agents to dedup
+
+        # Create agents and a collector relationship
+        agent_1 = models.Agent.objects.create(
+            id=7,
+            agenttype=0,
+            firstname="agent",
+            lastname="007",
+            specifyuser=None)
+        agent_2 = models.Agent.objects.create(
+            id=6,
+            agenttype=0,
+            firstname="agent",
+            lastname="006",
+            specifyuser=None)
+        agent_1_speciality_1 = models.Agentspecialty.objects.create(
+            id=1,
+            ordernumber=0,
+            agent=agent_1,
+            specialtyname='agent_1_speciality_1'
+        )
+        agent_1_speciality_2 = models.Agentspecialty.objects.create(
+            id=2,
+            ordernumber=1,
+            agent=agent_1,
+            specialtyname='agent_1_speciality_2'
+        )
+        agent_2_speciality = models.Agentspecialty.objects.create(
+            id=3,
+            ordernumber=2,
+            agent=agent_2,
+            specialtyname="agent_2_specialty_1"
+        )
+        c = Client()
+        c.force_login(self.specifyuser)
+
+        # Assert that the api request ran successfully
+        response = c.post(
+            f'/api/specify/agent/replace/{agent_2.id}/',
+            data=json.dumps({
+                'old_record_ids': [agent_1.id],
+                'new_record_data': {
+                    'agentspecialities': [
+                        {
+                            'specialityname': 'agent_2_speciality_1_new',
+                            'ordernumber': 0,
+                        },
+                        {
+                            'specialityname': 'agent_2_speciality_2_new',
+                            'ordernumber': 1,
+                        }
+                    ]
+                },
+                'background': False
+            }),
+            content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 204)
+        # Assert that previously created dependent resources are removed
+        self.assertEqual(models.Agentspecialty.objects.filter(id__in=[1, 2, 3]).count(), 0)
+        # Assert that two new specialty are created
+        self.assertEqual(models.Agentspecialty.objects.filter(agent_id=6).count(), 2)
+
+
+
+

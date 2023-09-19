@@ -485,11 +485,12 @@ def record_merge_fx(model_name: str, old_model_ids: List[int], new_model_id: int
             raise FailedMergingException(http.HttpResponseNotFound(model_name + "ID: " + str(old_model_id) + " does not exist."))
 
     # Get dependent fields and objects of the target object
-    target_object = target_model.objects.get(id=old_model_id)
-    dependant_table_names = [rel.relatedModelName
+    target_object = target_model.objects.get(id=new_model_id)
+    dependant_relationships = [(rel.relatedModelName, rel.name)
         for rel in target_object.specify_model.relationships
         if api.is_dependent_field(target_object, rel.name)]
 
+    dependant_table_names = set([rel[0] for rel in dependant_relationships])
     # Get all of the columns in all of the tables of specify the are foreign keys referencing model ID
     foreign_key_cols = []
     for table in spmodels.datamodel.tables:
@@ -633,6 +634,29 @@ def record_merge_fx(model_name: str, old_model_ids: List[int], new_model_id: int
     has_new_record_info = new_record_info is not None
     if has_new_record_info and 'new_record_data' in new_record_info and \
             new_record_info['new_record_data'] is not None:
+
+        # Drop all dependent resources, before saving. If this is not done, then resources
+        # which cause uniqueness rules to be violated, like AgentSpeciality won't get saved
+        # This is actually fine since api.put_resource will drop them later anyways.
+
+        for _, _field_name in dependant_relationships:
+            field_name = _field_name.lower()
+            new_related_data = new_record_info['new_record_data'].get(field_name, None)
+            getattr(target_object, field_name).all().delete()
+            def raise_if_contains_id(resource_data):
+                if 'id' in resource_data:
+                    raise FailedMergingException(f"Unexpected reference "
+                                                 f"to {resource_data['id']} "
+                                                 f"as {field_name} "
+                                                 f"with parent: {new_model_id}"
+                                                 f"in {model_name}")
+            if new_related_data is None:
+                continue
+            if isinstance(new_related_data, list):
+                [raise_if_contains_id(_data) for _data in new_related_data]
+                continue
+            raise_if_contains_id(new_related_data)
+
         try:
             obj = api.put_resource(new_record_info['collection'],
                                    new_record_info['specify_user'],
