@@ -81,8 +81,9 @@ def api_view(dispatch_func):
 resource = api_view(api.resource_dispatch)
 collection = api_view(api.collection_dispatch)
 Spappresource = getattr(spmodels, 'Spappresource')
-def test_merge(request, app_id, limit):
+def test_merge(request, app_id, limit, raise_on_error):
     with transaction.atomic():
+        raise_on_error = int(raise_on_error)
         resource = get_object_or_404(
             Spappresource,
             pk=app_id,
@@ -119,6 +120,9 @@ def test_merge(request, app_id, limit):
                 merge_result = 'success'
             except Exception as e:
                 merge_result = str(e)
+                merge_result = str(traceback.format_exc()) + merge_result
+                if raise_on_error == 1:
+                    raise
             result.append({'new': new_model_id, 'old': old_model_ids, 'result': merge_result})
             logger.warning(f'result for {idx}: {merge_result}')
         f = open('mergeresult.txt', 'w')
