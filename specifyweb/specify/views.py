@@ -25,12 +25,12 @@ from specifyweb.permissions.permissions import PermissionTarget, \
     PermissionTargetAction, PermissionsException, check_permission_targets, table_permissions_checker
 from specifyweb.celery_tasks import LogErrorsTask, app
 from . import api, models as spmodels
+from .api import get_object_or_404
 from .build_models import orderings
 from .load_datamodel import Table, FieldDoesNotExistError
 from .specify_jar import specify_jar
-from celery.utils.log import get_task_logger # type: ignore
-logger = get_task_logger(__name__)
-
+import logging
+logger = logging.getLogger(__name__)
 def login_maybe_required(view):
     @wraps(view)
     def wrapped(request, *args, **kwargs):
@@ -80,6 +80,52 @@ def api_view(dispatch_func):
 
 resource = api_view(api.resource_dispatch)
 collection = api_view(api.collection_dispatch)
+Spappresource = getattr(spmodels, 'Spappresource')
+def test_merge(request, app_id, limit):
+    with transaction.atomic():
+        resource = get_object_or_404(
+            Spappresource,
+            pk=app_id,
+        )
+        _data = resource.spappresourcedatas.get()
+        logger.warning('read data')
+        data = json.loads(_data.data)['recordMerging']['test']['testData']
+        result = []
+        limit = int(limit)
+        data = data if limit == 0 else data[:limit]
+        for idx, merge_item in enumerate(data):
+            new_model_id = int(merge_item['newId'])
+            old_model_ids = [int(_id) for _id in merge_item['oldIds']]
+            new_data = merge_item.get('newRecordData', None)
+            logger.warning(f'on {idx+1}/{len(data)}')
+            if new_data is None:
+                continue
+            record_version = getattr(spmodels, 'Agent').objects.get(id=new_model_id).version
+            new_record_info = {
+                'agent_id': new_model_id,
+                'collection': request.specify_collection,
+                'specify_user': request.specify_user_agent,
+                'version': record_version,
+                'new_record_data': json.loads(new_data)
+            }
+
+            try:
+                record_merge_fx('Agent',
+                                old_model_ids,
+                                int(new_model_id),
+                                None,
+                                new_record_info
+                                )
+                merge_result = 'success'
+            except Exception as e:
+                merge_result = str(e)
+            result.append({'new': new_model_id, 'old': old_model_ids, 'result': merge_result})
+            logger.warning(f'result for {idx}: {merge_result}')
+        f = open('mergeresult.txt', 'w')
+        f.write(str(result))
+        f.close()
+        raise Exception('outer')
+
 
 def raise_error(request):
     """This endpoint intentionally throws an error in the server for

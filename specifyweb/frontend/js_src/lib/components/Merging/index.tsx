@@ -41,6 +41,7 @@ import { Status } from './Status';
 import { InvalidMergeRecordsDialog } from './InvalidMergeRecords';
 import { recordMergingTableSpec } from './definitions';
 import { icons } from '../Atoms/Icons';
+import { downloadData } from './downloadData';
 
 export const mergingQueryParameter = 'records';
 
@@ -198,6 +199,15 @@ function Merging({
     [records, needUpdate]
   );
 
+  React.useEffect(() => {
+    let destructorCalled = false;
+    if (destructorCalled) return;
+    downloadData();
+    return () => {
+      destructorCalled = true;
+    };
+  }, []);
+
   const sortedResources = React.useMemo(
     () =>
       /*
@@ -310,6 +320,7 @@ function Merging({
                 body: {
                   old_record_ids: clones.map((clone) => clone.id),
                   new_record_data: merged.toJSON(),
+                  background: false,
                 },
                 expectedErrors: [Http.NOT_ALLOWED],
                 errorMode: 'dismissible',

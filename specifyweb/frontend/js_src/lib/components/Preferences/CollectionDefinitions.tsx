@@ -9,6 +9,7 @@ import type { QueryView } from '../QueryBuilder/Header';
 import type { StatLayout } from '../Statistics/types';
 import type { GenericPreferences } from './types';
 import { defineItem } from './types';
+import { MergeRowDataTEST, MergeRowTEST } from '../Merging/downloadData';
 
 export const collectionPreferenceDefinitions = {
   statistics: {
@@ -84,6 +85,32 @@ export const collectionPreferenceDefinitions = {
             },
             renderer: f.never,
             container: 'div',
+          }),
+        },
+      },
+    },
+  },
+  recordMerging: {
+    title: 'DEV TESTING RM',
+    subCategories: {
+      test: {
+        title: 'TEST',
+        items: {
+          testItems: defineItem<undefined | RA<MergeRowTEST>>({
+            title: 'Test IDs to fetch data for',
+            requiresReload: false,
+            visible: false,
+            defaultValue: undefined,
+            renderer: f.never,
+            container: 'label',
+          }),
+          testData: defineItem<RA<MergeRowDataTEST>>({
+            title: 'Test data corresponding to test items',
+            requiresReload: false,
+            visible: false,
+            defaultValue: [],
+            renderer: f.never,
+            container: 'label',
           }),
         },
       },

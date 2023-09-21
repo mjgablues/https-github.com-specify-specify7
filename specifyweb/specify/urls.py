@@ -25,6 +25,8 @@ urlpatterns = [
     # this url always triggers a 500 for testing purposes
     url(r'^test_error/', views.raise_error),
 
+    url(r'^test_merge/(?P<app_id>\d+)/(?P<limit>\d+)/', views.test_merge),
+
     # special tree apis
     url(r'^specify_tree/(?P<tree>\w+)/', include([ # permissions added
         url(r'^(?P<id>\d+)/path/$', tree_views.path),
