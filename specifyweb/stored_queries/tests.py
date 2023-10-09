@@ -53,7 +53,7 @@ class RefactoredStoredQueriesTests(ApiTests):
         test_query = QueryConstruct(
             collection=self.collection,
             objectformatter=ObjectFormatter(self.collection, self.specifyuser, False),
-            query=orm.Query(models.Collectionobject.collectionObjectId)
+            query=orm.Query(models.CollectionObject.collectionObjectId)
         )
         fs = QueryField(
             fieldspec=field_spec,
