@@ -49,7 +49,7 @@ class RefactoredStoredQueriesTests(ApiTests):
         self.assertTrue('agent_1."LastName" = :LastName_1'.lower() in str(predicate).lower())
 
     def test_year_equal_predicate(self):
-        field_spec = QueryFieldSpec.from_path(['collectionobject', 'collectingevent', 'startDate'])
+        field_spec = QueryFieldSpec.from_stringid('1,10.collectingevent.startDateNumericDay', False)
         test_query = QueryConstruct(
             collection=self.collection,
             objectformatter=ObjectFormatter(self.collection, self.specifyuser, False),
@@ -65,7 +65,7 @@ class RefactoredStoredQueriesTests(ApiTests):
             sort_type=0
         )
         query, field, predicate = fs.add_to_query(test_query)
-        self.assertTrue('EXTRACT(year FROM collectingevent_1."StartDate") = :param_1'.lower()  in str(predicate).lower())
+        self.assertTrue('EXTRACT(Day FROM collectingevent_1."StartDate") = :param_1'.lower()  in str(predicate).lower())
 
 @skip("These tests are out of date.")
 class StoredQueriesTests(ApiTests):
