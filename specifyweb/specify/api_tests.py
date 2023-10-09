@@ -82,6 +82,23 @@ class MainSetupTearDown:
                 catalognumber="num-%d" % i)
             for i in range(5)]
 
+        global_dir = models.Spappresourcedir.objects.create(
+            usertype="Common"
+        )
+        data_obj_formatter_resource = models.Spappresource.objects.create(
+            spappresourcedir=global_dir,
+            level=0,
+            name='DataObjFormatters',
+            specifyuser=self.specifyuser
+        )
+
+        data_obj_formatter_resource.spappresourcedatas.create(
+            data=open(
+        'specifyweb/frontend/js_src/lib/tests/ajax/static/context/app.resource/name=DataObjFormatters.xml').read()
+        )
+
+
+
 class ApiTests(MainSetupTearDown, TestCase): pass
 
 skip_perms_check = lambda x: None

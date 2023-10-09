@@ -4,8 +4,11 @@ from unittest import skip, expectedFailure
 from django.test import TestCase
 
 from specifyweb.specify.api_tests import ApiTests
+from .query_construct import QueryConstruct
+from .queryfield import QueryField
 from .queryfieldspec import QueryFieldSpec
 from . import models
+from .format import ObjectFormatter
 
 
 class QueryFieldTests(TestCase):
@@ -19,6 +22,33 @@ class QueryFieldTests(TestCase):
             fs = QueryFieldSpec.from_stringid(stringid, relfld)
             self.assertEqual(relfld == 1, fs.is_relationship())
             self.assertEqual(stringid.lower(), fs.to_stringid().lower())
+
+class RefactoredStoredQueriesTests(ApiTests):
+    def setUp(self):
+        super(RefactoredStoredQueriesTests, self).setUp()
+        self.get_query = lambda initials: QueryConstruct(
+            collection=self.collection,
+            objectformatter=ObjectFormatter(self.collection, self.specifyuser, False),
+            query=orm.Query(initials)
+        )
+
+    def test_id_field(self):
+        self.assertEqual(models.Taxon._id, 'taxonId')
+
+    def test_basic(self):
+        field_spec = QueryFieldSpec.from_path(['collectionobject', 'cataloger', 'lastname'])
+        test_query = self.get_query(orm.Query(models.CollectionObject.collectionObjectId))
+
+        fs = QueryField(fieldspec=field_spec,
+                        op_num=1,
+                        value='Bentley',
+                        negate=False,
+                        display=True,
+                        format_name=None,
+                        sort_type=0)
+
+        query, field, predicate = fs.add_to_query(test_query)
+        self.assertTrue('agent_1."LastName" = :LastName_1'.lower() in predicate.lower())
 
 
 @skip("These tests are out of date.")
