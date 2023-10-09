@@ -28,7 +28,7 @@ class RefactoredStoredQueriesTests(ApiTests):
         super(RefactoredStoredQueriesTests, self).setUp()
 
     def test_id_field(self):
-        self.assertEqual(models.Taxon._id, 'taxonId')
+        self.assertEqual(str(models.Taxon._id), 'taxonId')
 
     def test_basic(self):
         field_spec = QueryFieldSpec.from_path(['collectionobject', 'cataloger', 'lastname'])
@@ -46,7 +46,7 @@ class RefactoredStoredQueriesTests(ApiTests):
                         sort_type=0)
 
         query, field, predicate = fs.add_to_query(test_query)
-        self.assertTrue('agent_1."LastName" = :LastName_1'.lower() in predicate.lower())
+        self.assertTrue('agent_1."LastName" = :LastName_1'.lower() in str(predicate).lower())
 
 
 @skip("These tests are out of date.")
