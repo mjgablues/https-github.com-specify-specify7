@@ -48,6 +48,23 @@ class RefactoredStoredQueriesTests(ApiTests):
         query, field, predicate = fs.add_to_query(test_query)
         self.assertTrue('agent_1."LastName" = :LastName_1'.lower() in str(predicate).lower())
 
+    def test_year_equal_predicate(self):
+        field_spec = QueryFieldSpec.from_path(['collectionobject', 'collectingevent', 'startDate'])
+        test_query = QueryConstruct(
+            collection=self.collection,
+            objectformatter=ObjectFormatter(self.collection, self.specifyuser, False),
+            query=orm.Query(models.Collectionobject.collectionObjectId)
+        )
+        fs = QueryField(
+            fieldspec=field_spec,
+            op_num=1,
+            value='2000',
+            negate=False,
+            display=True,
+            sort_type=0
+        )
+        query, field, predicate = fs.add_to_query(test_query)
+        self.assertTrue('EXTRACT(year FROM collectingevent_1."StartDate") = :param_1'.lower()  in str(predicate).lower())
 
 @skip("These tests are out of date.")
 class StoredQueriesTests(ApiTests):
@@ -58,43 +75,6 @@ class StoredQueriesTests(ApiTests):
     #         contexttableid=1,
     #         name='test query',
     #         specifyuser=self.specifyuser)
-
-    def test_id_field(self):
-        self.assertEqual(models.Taxon._id, 'taxonId')
-
-    def test_basic(self):
-        fs = FieldSpec(field_name='lastName',
-                       date_part=None,
-                       root_table=models.CollectionObject,
-                       join_path=[('cataloger', models.Agent)],
-                       is_relation=False,
-                       op_num=1,
-                       value='Bentley',
-                       negate=False,
-                       display=True,
-                       sort_type=0,
-                       spqueryfieldid=None)
-
-        q, f = fs.add_to_query(orm.Query(models.CollectionObject.collectionObjectId))
-        sql = str(q)
-        self.assertTrue('WHERE agent_1."LastName" = :LastName_1' in sql)
-
-    def test_year_equal_predicate(self):
-        fs = FieldSpec(field_name='startDate',
-                       date_part='year',
-                       root_table=models.CollectionObject,
-                       join_path=[('collectingEvent', models.CollectingEvent)],
-                       is_relation=False,
-                       op_num=1,
-                       value='2000',
-                       negate=False,
-                       display=True,
-                       sort_type=0,
-                       spqueryfieldid=None)
-
-        q, f = fs.add_to_query(orm.Query(models.CollectionObject.collectionObjectId))
-        sql = str(q)
-        self.assertTrue('WHERE EXTRACT(year FROM collectingevent_1."StartDate") = :param_1' in sql)
 
     def test_tree_predicate(self):
         fs = FieldSpec(field_name='Family',
