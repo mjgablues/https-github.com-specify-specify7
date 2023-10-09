@@ -61,6 +61,7 @@ class RefactoredStoredQueriesTests(ApiTests):
             value='2000',
             negate=False,
             display=True,
+            format_name=None,
             sort_type=0
         )
         query, field, predicate = fs.add_to_query(test_query)
