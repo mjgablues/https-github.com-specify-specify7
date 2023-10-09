@@ -26,19 +26,17 @@ class QueryFieldTests(TestCase):
 class RefactoredStoredQueriesTests(ApiTests):
     def setUp(self):
         super(RefactoredStoredQueriesTests, self).setUp()
-        self.get_query = lambda initials: QueryConstruct(
-            collection=self.collection,
-            objectformatter=ObjectFormatter(self.collection, self.specifyuser, False),
-            query=orm.Query(initials)
-        )
 
     def test_id_field(self):
         self.assertEqual(models.Taxon._id, 'taxonId')
 
     def test_basic(self):
         field_spec = QueryFieldSpec.from_path(['collectionobject', 'cataloger', 'lastname'])
-        test_query = self.get_query(orm.Query(models.CollectionObject.collectionObjectId))
-
+        test_query = QueryConstruct(
+            collection=self.collection,
+            objectformatter=ObjectFormatter(self.collection, self.specifyuser, False),
+            query=orm.Query(models.CollectionObject.collectionObjectId)
+        )
         fs = QueryField(fieldspec=field_spec,
                         op_num=1,
                         value='Bentley',
