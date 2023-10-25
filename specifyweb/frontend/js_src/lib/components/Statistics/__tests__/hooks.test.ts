@@ -143,7 +143,7 @@ theories(applyStatBackendResponse, [
 theories(getOffsetOne, [
   {
     in: [8, 2],
-    out: 7,
+    out: 4,
   },
   {
     in: [8, 7],

@@ -167,8 +167,12 @@ jobs:
       - name: Run JS test suite
         working-directory: specifyweb/frontend/js_src
         run: |
+          set +e
           npm run typecheck && \
           npm run unitTests -- --maxWorkers ${{ steps.cpu-cores.outputs.count }}
+          exitcode="$?"
+          echo "exitcode for unit tests=$exitcode"
+          exit "$exitcode"
 
       - name: Clone branch that stores localization strings
         # Listen for changes to production branch
