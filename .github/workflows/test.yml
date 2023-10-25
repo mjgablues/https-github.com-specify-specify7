@@ -171,7 +171,7 @@ jobs:
           npm run typecheck && \
           npm run unitTests -- --maxWorkers ${{ steps.cpu-cores.outputs.count }}
           exitcode="$?"
-          echo "exitcode for unit tests=$exitcode" >> $GITHUB_OUTPUT
+          echo "exitcode for unit tests=$exitcode"
           exit "$exitcode"
 
       - name: Clone branch that stores localization strings
