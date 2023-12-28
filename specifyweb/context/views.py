@@ -31,7 +31,7 @@ from specifyweb.specify.schema import base_schema
 from specifyweb.specify.serialize_datamodel import datamodel_to_json
 from specifyweb.specify.specify_jar import specify_jar
 from specifyweb.specify.views import login_maybe_required, openapi
-from .app_resource import get_app_resource
+from .app_resource import get_app_resource, discipline_dirs
 from .remote_prefs import get_remote_prefs
 from .schema_localization import get_schema_languages, get_schema_localization
 from .viewsets import get_views
@@ -571,15 +571,16 @@ def views(request):
 @cache_control(max_age=86400, private=True)
 def viewsets(request):
     """Retrive a list of Specify 6 viewset xml files."""
-    viewsets = []
-    for root, dir, files in os.walk(settings.SPECIFY_CONFIG_DIR):
-        for file in files:
-            if file.endswith('.views.xml'):
-                viewsets.append(
-                    os.path.relpath(os.path.join(root, file),settings.SPECIFY_CONFIG_DIR)
-                )
-    return HttpResponse(json.dumps(viewsets), content_type="application/json")
 
+    dirs_to_lookup = discipline_dirs.values()
+    viewsets_found = [viewset for dir in dirs_to_lookup
+                      for viewset in get_files_endswith(dir)]
+    return HttpResponse(json.dumps(viewsets_found), content_type="application/json")
+
+def get_files_endswith(path):
+    return [os.path.relpath(os.path.join(root, file), settings.SPECIFY_CONFIG_DIR)
+            for root, _dir, files in os.walk(os.path.join(settings.SPECIFY_CONFIG_DIR, path))
+            for file in files if file.endswith('.views.xml')]
 
 def view_helper(request, limit):
     if 'collectionid' in request.GET:
