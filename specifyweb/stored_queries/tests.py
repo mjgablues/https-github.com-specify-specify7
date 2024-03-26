@@ -218,7 +218,8 @@ class FormatterAggregatorTests(SQLAlchemySetup):
             query = QueryConstruct(
                 collection=self.collection,
                 objectformatter=object_formatter,
-                query=session.query()
+                query=session.query(),
+                detect_cycles=True
             )
             _, accession_expr = object_formatter.objformat(query, models.Accession, None)
             self.assertEqual(str(accession_expr), 'IFNULL(accession."AccessionNumber", \'\')')
@@ -322,7 +323,8 @@ class FormatterAggregatorTests(SQLAlchemySetup):
             query = QueryConstruct(
                 collection=self.collection,
                 objectformatter=object_formatter,
-                query=session.query()
+                query=session.query(),
+                detect_cycles=True
             )
             query, expr = object_formatter.objformat(query, models.Accession, None)
             self.assertEqual(sqlparse.format(str(expr), reindent=True),
@@ -390,7 +392,8 @@ class FormatterAggregatorTests(SQLAlchemySetup):
             query = QueryConstruct(
                 collection=self.collection,
                 objectformatter=object_formatter,
-                query=session.query()
+                query=session.query(),
+                detect_cycles=True
             )
             query, expr = object_formatter.objformat(query, models.Accession, None)
             query = query.query.add_column(expr)
@@ -461,7 +464,8 @@ class FormatterAggregatorTests(SQLAlchemySetup):
             query = QueryConstruct(
                 collection=self.collection,
                 objectformatter=object_formatter,
-                query=session.query()
+                query=session.query(),
+                detect_cycles=True
             )
             query, expr = object_formatter.objformat(query, models.AccessionAgent, None)
             query = query.query.add_columns(expr)
