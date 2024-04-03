@@ -126,15 +126,17 @@ class ObjectFormatter(object):
         if formatter_field_spec.is_relationship():
             if previous_tables is not None and next_table_name in [table_name for table_name, _ in previous_tables]:
                 if query.detect_cycles:
-                    formatted_literal = literal(_text(f"<Cycle Detected>: {'->'.join([*[str(_) for _ in previous_tables], next_table_name])}"))
+                    cycle_path = '->'.join(str(table) for table in previous_tables + [next_table_name])
+                    formatted_literal = literal(_text(f"<Cycle Detected>: {cycle_path}"))
                 else:
-                    formatted_literal = literal(
-                        _text("<Invalid record formatter detected>") if formatter_field_spec.get_field().type == 'many-to-one' else
-                        _text("<Invalid record aggregator detected>")
-                    )
+                    field_type = formatter_field_spec.get_field().type
+                    error_message = "<Invalid record formatter detected>" \
+                        if field_type == 'many-to-one' \
+                        else "<Invalid record aggregator detected>"
+                    formatted_literal = literal(_text(error_message))
 
                 return query, formatted_literal,formatter_field_spec
-            new_query, new_expr, _, __ = formatter_field_spec.add_spec_to_query(
+            new_query, new_expr, _, _ = formatter_field_spec.add_spec_to_query(
                 query,
                 formatter,
                 aggregator, previous_tables)

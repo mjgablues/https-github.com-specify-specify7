@@ -397,10 +397,12 @@ class FormatterAggregatorTests(SQLAlchemySetup):
             )
             query, expr = object_formatter.objformat(query, models.Accession, None)
             query = query.query.add_column(expr)
-            self.assertCountEqual(list(query),
-                                  [(
-                                   "<Cycle Detected>: ('Accession', 'formatting')->('AccessionAgent', 'aggregating')->('AccessionAgent', 'formatting')->Accession",)]
-                                  )
+            expected_cycle_detected_str = (
+                "<Cycle Detected>: ('Accession', 'formatting')->('AccessionAgent', 'aggregating')"
+                "->('AccessionAgent', 'formatting')->Accession",
+            )
+            expected_result = [expected_cycle_detected_str]
+            self.assertCountEqual(list(query), expected_result)
 
     def test_relationships_in_switch_fields(self):
         formatter_def = """
