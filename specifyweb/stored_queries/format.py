@@ -128,6 +128,7 @@ class ObjectFormatter(object):
                 raise RecursiveDefinitionException
 
             new_query, new_expr, _, __ = formatter_field_spec.add_spec_to_query(
+
                 query,
                 formatter,
                 aggregator, previous_tables)
