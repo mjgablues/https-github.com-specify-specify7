@@ -8,7 +8,7 @@ from specifyweb.specify.models import datamodel
 from specifyweb.specify.uiformatters import get_uiformatter
 from . import models
 from .query_ops import QueryOps
-
+from sqlalchemy.sql.expression import literal
 logger = logging.getLogger(__name__)
 
 # The stringid is a structure consisting of three fields seperated by '.':
@@ -26,6 +26,11 @@ TAXON_FIELD_RE = re.compile(r'(.*) ((Author)|(GroupNumber))$')
 
 # Look to see if we are dealing with a tree node ID.
 TREE_ID_FIELD_RE = re.compile(r'(.*) (ID)$')
+
+
+class RecursiveDefinitionException(Exception):
+    pass
+
 
 def extract_date_part(fieldname):
     match = DATE_PART_RE.match(fieldname)
@@ -218,15 +223,20 @@ class QueryFieldSpec(namedtuple("QueryFieldSpec", "root_table root_sql_table joi
         # if self.get_field() is not None:
         #    print "field name " + self.get_field().name
         # print "is auditlog obj format field = " + str(self.is_auditlog_obj_format_field(formatauditobjs))
+        try:
         # print "############################################################################"
-        query, orm_field, field, table = self.add_spec_to_query(query, formatter)
+            query, orm_field, field, table = self.add_spec_to_query(query, formatter)
+        except RecursiveDefinitionException:
+            table = self.root_table
+            field  = None
+            orm_field = literal("<Incorrect Formatter Defined>")
         return self.apply_filter(query, orm_field, field, table, value, op_num, negate)
 
     def add_spec_to_query(self, query, formatter=None, aggregator=None, cycle_detector=[]):
 
         if self.tree_rank is None and self.get_field() is None:
             return (*query.objectformatter.objformat(
-                query, self.root_sql_table, formatter), None, self.root_table)
+                query, getattr(models, self.root_table.name), formatter), None, self.root_table)
 
         if self.is_relationship():
             # will be formatting or aggregating related objects
@@ -236,6 +246,8 @@ class QueryFieldSpec(namedtuple("QueryFieldSpec", "root_table root_sql_table joi
             else:
                 query, orm_model, table, field = self.build_join(query, self.join_path[:-1])
                 orm_field = query.objectformatter.aggregate(query, self.get_field(), orm_model, aggregator or formatter, cycle_detector)
+
+
         else:
             query, orm_model, table, field = self.build_join(query, self.join_path)
             if self.tree_rank is not None:

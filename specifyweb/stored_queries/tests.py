@@ -6,7 +6,7 @@ import specifyweb.specify.models as spmodels
 from specifyweb.specify.api_tests import ApiTests
 from .format import ObjectFormatter
 from .query_construct import QueryConstruct
-from .queryfieldspec import QueryFieldSpec
+from .queryfieldspec import QueryFieldSpec, RecursiveDefinitionException
 from MySQLdb.cursors import SSCursor
 from django.conf import settings
 import sqlalchemy
@@ -85,7 +85,6 @@ class SQLAlchemySetup(ApiTests):
             # Tests will fail when migrated to different background. TODO: Auto-detect dialects
             final_query = str(unioned.compile(compile_kwargs={"literal_binds": True, }, dialect=mysql.dialect()))
             return final_query, ()
-
 
 
 class SQLAlchemySetupTest(SQLAlchemySetup):
@@ -218,8 +217,7 @@ class FormatterAggregatorTests(SQLAlchemySetup):
             query = QueryConstruct(
                 collection=self.collection,
                 objectformatter=object_formatter,
-                query=session.query(),
-                detect_cycles=True
+                query=session.query()
             )
             _, accession_expr = object_formatter.objformat(query, models.Accession, None)
             self.assertEqual(str(accession_expr), 'IFNULL(accession."AccessionNumber", \'\')')
@@ -323,8 +321,7 @@ class FormatterAggregatorTests(SQLAlchemySetup):
             query = QueryConstruct(
                 collection=self.collection,
                 objectformatter=object_formatter,
-                query=session.query(),
-                detect_cycles=True
+                query=session.query()
             )
             query, expr = object_formatter.objformat(query, models.Accession, None)
             self.assertEqual(sqlparse.format(str(expr), reindent=True),
@@ -392,15 +389,11 @@ class FormatterAggregatorTests(SQLAlchemySetup):
             query = QueryConstruct(
                 collection=self.collection,
                 objectformatter=object_formatter,
-                query=session.query(),
-                detect_cycles=True
+                query=session.query()
             )
-            query, expr = object_formatter.objformat(query, models.Accession, None)
-            query = query.query.add_column(expr)
-            self.assertCountEqual(list(query),
-                                  [(
-                                   "<Cycle Detected.>: ('Accession', 'formatting')->('AccessionAgent', 'aggregating')->('AccessionAgent', 'formatting')->Accession",)]
-                                  )
+            with self.assertRaises(RecursiveDefinitionException):
+                object_formatter.objformat(query, models.Accession, None)
+
 
     def test_relationships_in_switch_fields(self):
         formatter_def = """
@@ -464,8 +457,7 @@ class FormatterAggregatorTests(SQLAlchemySetup):
             query = QueryConstruct(
                 collection=self.collection,
                 objectformatter=object_formatter,
-                query=session.query(),
-                detect_cycles=True
+                query=session.query()
             )
             query, expr = object_formatter.objformat(query, models.AccessionAgent, None)
             query = query.query.add_columns(expr)

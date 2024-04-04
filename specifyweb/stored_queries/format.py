@@ -28,14 +28,13 @@ from . import models
 from .group_concat import group_concat
 from .blank_nulls import blank_nulls
 from .query_construct import QueryConstruct
-from .queryfieldspec import QueryFieldSpec
+from .queryfieldspec import QueryFieldSpec, RecursiveDefinitionException
 
 logger = logging.getLogger(__name__)
 
 CollectionObject_model = datamodel.get_table('CollectionObject')
 Agent_model = datamodel.get_table('Agent')
 Spauditlog_model = datamodel.get_table('SpAuditLog')
-
 
 class ObjectFormatter(object):
     def __init__(self, collection, user, replace_nulls):
@@ -109,7 +108,7 @@ class ObjectFormatter(object):
                   fieldNodeAttrib,
                   orm_table,
                   specify_model,
-                  previous_tables=None,
+                  previous_tables=[],
                   do_blank_null = True
                   ) -> Tuple[
         QueryConstruct, blank_nulls, QueryFieldSpec]:
@@ -124,16 +123,10 @@ class ObjectFormatter(object):
         formatter_field_spec = formatter_field_spec._replace(root_sql_table=orm_table)
 
         if formatter_field_spec.is_relationship():
-            if previous_tables is not None and next_table_name in [table_name for table_name, _ in previous_tables]:
-                if query.detect_cycles:
-                    formatted_literal = literal(_text(f"<Cycle Detected.>: {'->'.join([*[str(_) for _ in previous_tables], next_table_name])}"))
-                else:
-                    formatted_literal = literal(
-                        _text("<Invalid record formatter detected>") if formatter_field_spec.get_field().type == 'many-to-one' else
-                        _text("<Invalid record aggregator detected>")
-                    )
 
-                return query, formatted_literal,formatter_field_spec
+            if next_table_name in [table_name for table_name, _ in previous_tables]:
+                raise RecursiveDefinitionException
+
             new_query, new_expr, _, __ = formatter_field_spec.add_spec_to_query(
                 query,
                 formatter,
@@ -180,6 +173,7 @@ class ObjectFormatter(object):
 
         switchNode = formatterNode.find('switch')
         single = switchNode.attrib.get('single', 'true') == 'true'
+
         cases = []
         for caseNode in switchNode.findall('fields'):
             query, value, expr = make_case(query, caseNode)
@@ -198,6 +192,7 @@ class ObjectFormatter(object):
             def case_value_convert(value): return value == 'true' if switch_field_spec.get_field().type == 'java.lang.Boolean' else value
             cases = [(case_value_convert(value), expr) for (value, expr) in cases]
             expr = case(cases, formatted)
+
         return query, blank_nulls(expr)
 
     def aggregate(self, query: QueryConstruct,
@@ -232,8 +227,9 @@ class ObjectFormatter(object):
             query=orm.Query([]).select_from(orm_table) \
                 .filter(join_column == getattr(rel_table, rel_table._id)) \
                 .correlate(rel_table),
-            detect_cycles=query.detect_cycles
+ 
         )
+
 
         subquery, formatted = self.objformat(subquery, orm_table,
                                              formatter_name, cycle_with_self)
@@ -246,10 +242,12 @@ class ObjectFormatter(object):
 
         aggregated = blank_nulls(group_concat(formatted, separator, *order_by_expr))
 
-
         aggregator_label = f"aggregator_{self.aggregator_count}"
         self.aggregator_count += 1
-        return subquery.query.add_column(aggregated).limit(limit).label(aggregator_label)
+
+        aggregated_with_label = subquery.query.add_column(aggregated).limit(limit).label(aggregator_label)
+
+        return aggregated_with_label
 
     def fieldformat(self, query_field: QueryField,
                     field: blank_nulls) -> blank_nulls:

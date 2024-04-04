@@ -18,7 +18,7 @@ def get_treedef(collection, tree_name):
 class QueryConstruct(
     namedtuple(
         'QueryConstruct',
-        'collection objectformatter query join_cache param_count tree_rank_count detect_cycles')
+        'collection objectformatter query join_cache param_count tree_rank_count')
 ):
 
     def __new__(cls, *args, **kwargs):
